@@ -209,3 +209,43 @@ def test_digital_twin_simulate_endpoint_with_personalization():
     assert body["status"] in ("pass", "warn", "fail")
     # Personalization layer should have produced at least one modifier beyond the explicit one.
     assert "kR" in body["plan"]["parameterModifiers"]
+
+
+def test_digital_twin_simulate_advanced_scenario_endpoint():
+    client = _client()
+    tok = _token(client)
+    headers = {"Authorization": f"Bearer {tok}"}
+
+    req = {
+        "profile": {
+            "patientId": "P-TWIN-001",
+            "baselineGlucoseMgdl": 152,
+            "hbA1cPercent": 8.1,
+            "bmi": 31,
+            "oralClasses": ["metformin", "sglt2i"],
+        },
+        "historicalGlucose": [
+            {"minuteOffset": 0, "glucoseMgdl": 148},
+            {"minuteOffset": 15, "glucoseMgdl": 151},
+            {"minuteOffset": 30, "glucoseMgdl": 154},
+            {"minuteOffset": 45, "glucoseMgdl": 150},
+        ],
+        "scenario": {
+            "name": "post-breakfast-walk",
+            "horizonMinutes": 12 * 60,
+            "dtMinutes": 15,
+            "events": [
+                {"eventType": "meal", "startMinutes": 30, "mealCarbsGrams": 55, "glycemicIndex": 95, "label": "breakfast"},
+                {"eventType": "exercise", "startMinutes": 120, "durationMinutes": 45, "intensity": 1.2, "label": "walk"},
+                {"eventType": "insulin-bolus", "startMinutes": 30, "insulinUnits": 2.0, "label": "correction"},
+            ],
+        },
+    }
+
+    out = client.post("/v1/digital-twin/simulate-advanced", json=req, headers=headers)
+    assert out.status_code == 200
+    body = out.json()
+    assert body["dataset"]["datasetId"] == "Shanghai_T2DM"
+    assert body["status"] in ("pass", "warn", "fail")
+    assert body["metrics"]["horizonMinutes"] == 12 * 60
+    assert len(body["trajectory"]) > 10

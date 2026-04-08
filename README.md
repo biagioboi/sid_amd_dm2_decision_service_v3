@@ -12,6 +12,7 @@ Reference implementation per la gestione del diabete mellito tipo 2 secondo line
 - Audit trail base
 - Autenticazione OAuth2 Password Flow + JWT (Bearer)
 - Validazione **Digital Twin**: prima di restituire i suggerimenti, simula un piano di 24h e produce esito `pass|warn|fail` + metriche in `digitalTwin`
+- Simulatore **Digital Twin avanzato** orientato a timeline di eventi (pasti, esercizio, boli, farmaci, stress), impostato per poter usare il dataset **Shanghai_T2DM**
 - Test automatici con `pytest`
 
 ## Avvio
@@ -36,6 +37,8 @@ docker compose up --build
 - `POST /v1/decision-evaluations`
 - `GET /v1/decision-evaluations/{evaluationId}`
 - `GET /v1/decision-evaluations/{evaluationId}/audit`
+- `POST /v1/digital-twin/simulate`
+- `POST /v1/digital-twin/simulate-advanced`
 - `GET /fhir/PlanDefinition/sid-amd-dm2-2022`
 - `GET /fhir/Library/sid-amd-dm2-logic`
 - `POST /fhir/PlanDefinition/sid-amd-dm2-2022/$apply`
@@ -45,7 +48,7 @@ docker compose up --build
 1) Ottieni un token JWT:
 
 ```bash
-TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/token \
+TOKEN=$(curl -s -X POST http://127.0.0.1:9001/auth/token \
   -H 'Content-Type: application/x-www-form-urlencoded' \
   -d 'username=admin&password=admin' | python -c "import sys, json; print(json.load(sys.stdin)['access_token'])")
 ```
@@ -53,10 +56,37 @@ TOKEN=$(curl -s -X POST http://127.0.0.1:8000/auth/token \
 2) Valuta un paziente:
 
 ```bash
-curl -X POST http://127.0.0.1:8000/v1/decision-evaluations \
+curl -X POST http://127.0.0.1:9001/v1/decision-evaluations \
   -H 'Content-Type: application/json' \
   -H "Authorization: Bearer $TOKEN" \
   -d @example-request.json
+```
+
+3) Lancia una simulazione avanzata del twin:
+
+```bash
+curl -X POST http://127.0.0.1:9001/v1/digital-twin/simulate-advanced \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "profile": {
+      "patientId": "P-TWIN-001",
+      "baselineGlucoseMgdl": 150,
+      "hbA1cPercent": 8.0,
+      "bmi": 31,
+      "oralClasses": ["metformin", "sglt2i"]
+    },
+    "scenario": {
+      "name": "baseline-day",
+      "horizonMinutes": 720,
+      "dtMinutes": 15,
+      "events": [
+        {"eventType": "meal", "startMinutes": 30, "mealCarbsGrams": 55, "glycemicIndex": 95, "label": "breakfast"},
+        {"eventType": "exercise", "startMinutes": 120, "durationMinutes": 45, "intensity": 1.2, "label": "walk"},
+        {"eventType": "insulin-bolus", "startMinutes": 30, "insulinUnits": 2.0, "label": "correction"}
+      ]
+    }
+  }'
 ```
 
 ## Test
@@ -69,3 +99,4 @@ pytest -q
 
 - I cambi terapia sono sempre restituiti come **raccomandazioni draft** e richiedono validazione clinica.
 - Il database SQLite viene creato in `data/decision_service.db`.
+- Il nuovo endpoint avanzato del twin usa come default il contesto del dataset Shanghai T2DM: 100 pazienti T2DM, CGM ogni 15 minuti, registrazioni di 3-14 giorni, come descritto nell'articolo "Chinese diabetes datasets for data-driven machine learning" (Scientific Data, 2023) e nella repo dataset indicata dall'utente.

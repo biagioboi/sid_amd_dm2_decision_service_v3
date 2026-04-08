@@ -227,3 +227,162 @@ class DigitalTwinSimulateResponse(BaseModel):
     reason: str
     metrics: DigitalTwinMetrics
     plan: DigitalTwinPlan
+
+
+class TwinDatasetReference(BaseModel):
+    datasetId: str = "Shanghai_T2DM"
+    cohort: str = "Shanghai T2DM"
+    sourceUrl: str = (
+        "https://github.com/KartikeyBartwal/Research-Work-On-Detecting-Type-1-and-Type-2-Diabetes-via-Shanghai-Dataset/tree/main/Shanghai_T2DM"
+    )
+    summaryUrl: str = (
+        "https://github.com/KartikeyBartwal/Research-Work-On-Detecting-Type-1-and-Type-2-Diabetes-via-Shanghai-Dataset/blob/main/Shanghai_T2DM_Summary.xlsx"
+    )
+    publicationUrl: str = "https://www.nature.com/articles/s41597-023-01940-7"
+    patientCount: int = 100
+    cgmSamplingMinutes: int = 15
+    minRecordingDays: int = 3
+    maxRecordingDays: int = 14
+
+
+class TwinGlucoseSample(BaseModel):
+    minuteOffset: int = Field(..., ge=0)
+    glucoseMgdl: float = Field(..., gt=0)
+    source: str = Field(default="cgm")
+
+
+class TwinPatientProfile(BaseModel):
+    patientId: Optional[str] = None
+    diabetesType: str = "type2"
+    ageYears: Optional[int] = None
+    sexAtBirth: Optional[str] = None
+    diabetesDurationYears: Optional[float] = None
+    weightKg: Optional[float] = None
+    heightCm: Optional[float] = None
+    bmi: Optional[float] = None
+    hbA1cPercent: Optional[float] = None
+    eGFRmlMin: Optional[float] = None
+    baselineGlucoseMgdl: Optional[float] = 140.0
+    carbRatioGramsPerUnit: Optional[float] = None
+    insulinSensitivityMgdlPerUnit: Optional[float] = None
+    gastricAbsorptionMinutes: int = Field(default=180, ge=30, le=480)
+    insulinActionMinutes: int = Field(default=300, ge=60, le=720)
+    exerciseSensitivityBoost: float = Field(default=0.15, ge=0.0, le=2.0)
+    hepaticGlucoseReleaseMgdlPerHour: float = Field(default=6.0, ge=-10.0, le=30.0)
+    oralClasses: List[str] = Field(default_factory=list)
+    parameterModifiers: Dict[str, float] = Field(default_factory=dict)
+
+
+class TwinEvent(BaseModel):
+    eventType: str = Field(
+        ...,
+        description="meal|exercise|insulin-bolus|insulin-basal|medication|stress",
+    )
+    startMinutes: int = Field(..., ge=0)
+    durationMinutes: int = Field(default=0, ge=0)
+    label: Optional[str] = None
+    mealCarbsGrams: Optional[float] = None
+    glycemicIndex: float = Field(default=100.0, ge=10.0, le=150.0)
+    insulinUnits: Optional[float] = None
+    medicationClass: Optional[str] = None
+    intensity: float = Field(default=1.0, ge=0.0, le=5.0)
+    stressLoad: float = Field(default=0.0, ge=0.0, le=5.0)
+    notes: Optional[str] = None
+
+
+class TwinScenario(BaseModel):
+    name: str = "baseline-day"
+    description: Optional[str] = None
+    horizonMinutes: int = Field(default=24 * 60, ge=60, le=14 * 24 * 60)
+    dtMinutes: int = Field(default=15, ge=5, le=60)
+    startingGlucoseMgdl: Optional[float] = Field(default=None, gt=0)
+    events: List[TwinEvent] = Field(default_factory=list)
+
+
+class TwinTrajectoryPoint(BaseModel):
+    minute: int
+    glucoseMgdl: float
+    deltaMgdl: float
+    carbsEffectMgdl: float = 0.0
+    insulinEffectMgdl: float = 0.0
+    exerciseEffectMgdl: float = 0.0
+    hepaticEffectMgdl: float = 0.0
+
+
+class TwinScenarioMetrics(BaseModel):
+    horizonMinutes: int
+    dtMinutes: int
+    initialGlucose: float
+    finalGlucose: float
+    minGlucose: float
+    maxGlucose: float
+    meanGlucose: float
+    timeInRange70_180: float
+    timeBelow70: float
+    timeAbove180: float
+    timeAbove250: float
+
+
+class TwinScenarioSimulationRequest(BaseModel):
+    dataset: TwinDatasetReference = Field(default_factory=TwinDatasetReference)
+    profile: TwinPatientProfile = Field(default_factory=TwinPatientProfile)
+    scenario: TwinScenario
+    facts: Optional[FactsModel] = Field(
+        default=None,
+        description="Optional clinical facts to align the simulator with the decision-service payload.",
+    )
+    historicalGlucose: List[TwinGlucoseSample] = Field(default_factory=list)
+
+
+class TwinScenarioSimulationResponse(BaseModel):
+    status: str
+    reason: str
+    dataset: TwinDatasetReference
+    profile: TwinPatientProfile
+    metrics: TwinScenarioMetrics
+    assumptions: List[str] = Field(default_factory=list)
+    trajectory: List[TwinTrajectoryPoint] = Field(default_factory=list)
+
+
+class TwinCalibrationMetrics(BaseModel):
+    observationCount: int
+    rmseMgdl: float
+    maeMgdl: float
+    bestParameters: Dict[str, float] = Field(default_factory=dict)
+
+
+class TwinDatasetCalibrationRequest(BaseModel):
+    recordId: str = Field(..., description="Example: 2014_1_20210317")
+    datasetRoot: str = "dataset/Shanghai_T2DM"
+    summaryPath: str = "dataset/Shanghai_T2DM_Summary.xlsx"
+    dtMinutes: int = Field(default=15, ge=5, le=60)
+
+
+class TwinDatasetCalibrationResponse(BaseModel):
+    recordId: str
+    sourceFile: str
+    dataset: TwinDatasetReference
+    profile: TwinPatientProfile
+    scenario: TwinScenario
+    historicalGlucose: List[TwinGlucoseSample] = Field(default_factory=list)
+    calibration: TwinCalibrationMetrics
+    assumptions: List[str] = Field(default_factory=list)
+
+
+class TwinDatasetSimulationRequest(BaseModel):
+    recordId: str = Field(..., description="Example: 2014_1_20210317")
+    datasetRoot: str = "dataset/Shanghai_T2DM"
+    summaryPath: str = "dataset/Shanghai_T2DM_Summary.xlsx"
+    dtMinutes: int = Field(default=15, ge=5, le=60)
+    calibrateProfile: bool = True
+
+
+class TwinDatasetSimulationResponse(BaseModel):
+    recordId: str
+    sourceFile: str
+    dataset: TwinDatasetReference
+    profile: TwinPatientProfile
+    scenario: TwinScenario
+    historicalGlucose: List[TwinGlucoseSample] = Field(default_factory=list)
+    calibration: Optional[TwinCalibrationMetrics] = None
+    simulation: TwinScenarioSimulationResponse

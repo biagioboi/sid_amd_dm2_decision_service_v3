@@ -8,8 +8,15 @@ from .auth import authenticate_user, create_access_token, require_role
 from .digital_twin import derive_parameter_modifiers_from_facts, evaluate_plan
 from .engine import evaluate_request
 from .fhir_adapter import apply_plandefinition, load_library_cql, load_plandefinition
-from .models import DecisionEvaluationRequest, DigitalTwinSimulateRequest, DigitalTwinSimulateResponse, DigitalTwinMetrics
+from .models import (
+    DecisionEvaluationRequest,
+    DigitalTwinMetrics,
+    DigitalTwinSimulateRequest,
+    DigitalTwinSimulateResponse,
+    TwinScenarioSimulationRequest,
+)
 from .persistence import get_evaluation, init_db, list_audit_events, save_evaluation
+from .twin import simulate_scenario
 
 app = FastAPI(
     title="SID/AMD DM2 Decision Service",
@@ -108,4 +115,10 @@ def digital_twin_simulate(body: DigitalTwinSimulateRequest) -> dict:
         metrics=DigitalTwinMetrics(**metrics),
         plan=body.plan.model_copy(update={"parameterModifiers": modifiers}),
     )
+    return resp.model_dump(mode="json") if hasattr(resp, "model_dump") else resp.dict()
+
+
+@app.post("/v1/digital-twin/simulate-advanced", dependencies=[Depends(require_role("clinician"))])
+def digital_twin_simulate_advanced(body: TwinScenarioSimulationRequest) -> dict:
+    resp = simulate_scenario(body)
     return resp.model_dump(mode="json") if hasattr(resp, "model_dump") else resp.dict()

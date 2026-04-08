@@ -25,4 +25,4 @@ services:
       JWT_SECRET: change-me-in-prod
       JWT_EXPIRE_MINUTES: "120"
     ports:
-      - "8000:8000"
+      - "9001:9001"
