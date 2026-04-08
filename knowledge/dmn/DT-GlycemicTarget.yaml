@@ -1,0 +1,35 @@
+name: DT-GlycemicTarget
+sidMapping: ["1.1", "1.2.1", "1.2.2"]
+hitPolicy: FIRST
+rules:
+  - id: DT-TARGET-001
+    when:
+      - field: onHypoglycemiaInducingTherapy
+        op: eq
+        value: true
+    then:
+      targetHbA1cMin: 6.6
+      targetHbA1cMax: 7.5
+      sidRef: "1.1"
+      outcome: target_6_6_to_7_5
+  - id: DT-TARGET-002
+    when:
+      - field: onHypoglycemiaInducingTherapy
+        op: eq
+        value: false
+      - field: goals.individualizedTighterGoalRequested
+        op: eq
+        value: true
+    then:
+      targetHbA1cMax: 6.5
+      sidRef: "1.2.2"
+      outcome: target_lt_6_5
+  - id: DT-TARGET-003
+    when:
+      - field: onHypoglycemiaInducingTherapy
+        op: eq
+        value: false
+    then:
+      targetHbA1cMax: 7.0
+      sidRef: "1.2.1"
+      outcome: target_lt_7_0

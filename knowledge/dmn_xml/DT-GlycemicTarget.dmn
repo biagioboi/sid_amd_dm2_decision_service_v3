@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" name="DT-GlycemicTarget" id="DT-GlycemicTarget">
+  <decision id="d1" name="GlycemicTarget">
+    <decisionTable hitPolicy="FIRST">
+      <input id="i1">
+        <inputExpression typeRef="boolean"><text>onHypoglycemiaInducingTherapy</text></inputExpression>
+      </input>
+      <input id="i2">
+        <inputExpression typeRef="boolean"><text>goals.individualizedTighterGoalRequested</text></inputExpression>
+      </input>
+
+      <output id="o1" name="targetHbA1cMin" typeRef="number" />
+      <output id="o2" name="targetHbA1cMax" typeRef="number" />
+      <output id="o3" name="sidRef" typeRef="string" />
+
+      <rule id="r1">
+        <inputEntry><text>= true</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>6.6</text></outputEntry>
+        <outputEntry><text>7.5</text></outputEntry>
+        <outputEntry><text>"1.1"</text></outputEntry>
+      </rule>
+
+      <rule id="r2">
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>= true</text></inputEntry>
+        <outputEntry><text>-</text></outputEntry>
+        <outputEntry><text>6.5</text></outputEntry>
+        <outputEntry><text>"1.2.2"</text></outputEntry>
+      </rule>
+
+      <rule id="r3">
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>= false</text></inputEntry>
+        <outputEntry><text>-</text></outputEntry>
+        <outputEntry><text>7.0</text></outputEntry>
+        <outputEntry><text>"1.2.1"</text></outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+</definitions>

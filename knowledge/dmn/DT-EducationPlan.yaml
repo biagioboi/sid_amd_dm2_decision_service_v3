@@ -1,0 +1,37 @@
+name: DT-EducationPlan
+sidMapping: ["4.1", "4.2"]
+hitPolicy: FIRST
+rules:
+  - id: DT-EDU-001
+    when:
+      - field: education.structuredEducationDone
+        op: eq
+        value: false
+      - field: education.groupEducationFeasible
+        op: eq
+        value: true
+    then:
+      recommendStructuredEducation: true
+      educationMode: group
+      sidRef: "4.2"
+      outcome: structured_group_education
+  - id: DT-EDU-002
+    when:
+      - field: education.structuredEducationDone
+        op: eq
+        value: false
+    then:
+      recommendStructuredEducation: true
+      educationMode: individual
+      sidRef: "4.1"
+      outcome: structured_individual_education
+  - id: DT-EDU-003
+    when:
+      - field: education.structuredEducationDone
+        op: eq
+        value: true
+    then:
+      recommendStructuredEducation: false
+      educationMode: maintain
+      sidRef: "4.1"
+      outcome: education_already_done

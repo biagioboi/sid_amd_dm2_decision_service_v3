@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" name="DT-PharmacologicPath" id="DT-PharmacologicPath">
+  <decision id="d1" name="PharmacologicPath">
+    <decisionTable hitPolicy="FIRST">
+      <input id="i1">
+        <inputExpression typeRef="string"><text>phenotype</text></inputExpression>
+      </input>
+      <input id="i2">
+        <inputExpression typeRef="boolean"><text>therapy.metforminContraindicated</text></inputExpression>
+      </input>
+      <input id="i3">
+        <inputExpression typeRef="boolean"><text>therapy.sglt2iContraindicated</text></inputExpression>
+      </input>
+      <input id="i4">
+        <inputExpression typeRef="boolean"><text>therapy.glp1raContraindicated</text></inputExpression>
+      </input>
+
+      <output id="o1" name="firstLineClasses" typeRef="string" />
+      <output id="o2" name="secondLineClasses" typeRef="string" />
+      <output id="o3" name="thirdLineClasses" typeRef="string" />
+      <output id="o4" name="avoidClasses" typeRef="string" />
+      <output id="o5" name="sidRef" typeRef="string" />
+
+      <!-- HF: 5.4 -->
+      <rule id="r1">
+        <inputEntry><text>= "HF"</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>["sglt2i"]</text></outputEntry>
+        <outputEntry><text>["glp1ra","metformin"]</text></outputEntry>
+        <outputEntry><text>["dpp4i","acarbose","insulin"]</text></outputEntry>
+        <outputEntry><text>["sulfonylurea","glinide"]</text></outputEntry>
+        <outputEntry><text>"5.4"</text></outputEntry>
+      </rule>
+
+      <!-- CVD without HF: 5.3 -->
+      <rule id="r2">
+        <inputEntry><text>= "CVD_NO_HF"</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>["metformin","sglt2i","glp1ra"]</text></outputEntry>
+        <outputEntry><text>["pioglitazone","dpp4i","acarbose","insulin"]</text></outputEntry>
+        <outputEntry><text>[]</text></outputEntry>
+        <outputEntry><text>["sulfonylurea","glinide"]</text></outputEntry>
+        <outputEntry><text>"5.3"</text></outputEntry>
+      </rule>
+
+      <!-- CKD without CVD/HF: 5.2 -->
+      <rule id="r3">
+        <inputEntry><text>= "CKD_NO_CVD_NO_HF"</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>["metformin","sglt2i"]</text></outputEntry>
+        <outputEntry><text>["glp1ra"]</text></outputEntry>
+        <outputEntry><text>["pioglitazone","dpp4i","acarbose","insulin"]</text></outputEntry>
+        <outputEntry><text>["sulfonylurea","glinide"]</text></outputEntry>
+        <outputEntry><text>"5.2"</text></outputEntry>
+      </rule>
+
+      <!-- Standard: 5.1 -->
+      <rule id="r4">
+        <inputEntry><text>= "STANDARD"</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>["metformin"]</text></outputEntry>
+        <outputEntry><text>["sglt2i","glp1ra"]</text></outputEntry>
+        <outputEntry><text>["dpp4i","acarbose","pioglitazone","insulin"]</text></outputEntry>
+        <outputEntry><text>["sulfonylurea","glinide"]</text></outputEntry>
+        <outputEntry><text>"5.1"</text></outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+</definitions>

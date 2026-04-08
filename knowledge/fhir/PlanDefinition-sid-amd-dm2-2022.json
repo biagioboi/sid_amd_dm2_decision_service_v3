@@ -1,0 +1,91 @@
+{
+  "resourceType": "PlanDefinition",
+  "id": "sid-amd-dm2-2022",
+  "url": "https://example.org/fhir/PlanDefinition/sid-amd-dm2-2022",
+  "version": "2022.12",
+  "name": "SIDAMDDM2Guideline",
+  "title": "SID/AMD Terapia del diabete mellito di tipo 2 - versione 2022.12",
+  "status": "active",
+  "experimental": false,
+  "type": {
+    "coding": [
+      {
+        "system": "http://terminology.hl7.org/CodeSystem/plan-definition-type",
+        "code": "eca-rule"
+      }
+    ]
+  },
+  "library": [
+    "https://example.org/fhir/Library/sid-amd-dm2-logic"
+  ],
+  "goal": [
+    {
+      "description": {
+        "text": "Raggiungere il target glicemico individualizzato"
+      }
+    },
+    {
+      "description": {
+        "text": "Selezionare il percorso terapeutico coerente con fenotipo CV/renale"
+      }
+    }
+  ],
+  "action": [
+    {
+      "id": "assess-target",
+      "title": "Valuta target HbA1c",
+      "description": "Determina il target individualizzato in base al rischio ipoglicemico",
+      "condition": [
+        {
+          "kind": "applicability",
+          "expression": {
+            "language": "text/cql-identifier",
+            "expression": "NeedsTargetEvaluation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "lifestyle",
+      "title": "Piano stile di vita",
+      "description": "Nutrizione, attività fisica, educazione",
+      "condition": [
+        {
+          "kind": "applicability",
+          "expression": {
+            "language": "text/cql-identifier",
+            "expression": "NeedsLifestyleIntervention"
+          }
+        }
+      ]
+    },
+    {
+      "id": "pharmacologic",
+      "title": "Percorso farmacologico",
+      "description": "Classi di prima/seconda/terza scelta",
+      "condition": [
+        {
+          "kind": "applicability",
+          "expression": {
+            "language": "text/cql-identifier",
+            "expression": "NeedsPharmacologicEvaluation"
+          }
+        }
+      ]
+    },
+    {
+      "id": "monitoring",
+      "title": "Piano di monitoraggio glicemico",
+      "description": "SMBG strutturato o nessuna preferenza CGM/SMBG in basal-bolus",
+      "condition": [
+        {
+          "kind": "applicability",
+          "expression": {
+            "language": "text/cql-identifier",
+            "expression": "NeedsMonitoringPlan"
+          }
+        }
+      ]
+    }
+  ]
+}

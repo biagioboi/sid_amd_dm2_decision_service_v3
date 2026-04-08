@@ -1,0 +1,52 @@
+name: DT-PharmacologicPath
+sidMapping: ["5.1", "5.2", "5.3", "5.4"]
+hitPolicy: FIRST
+rules:
+  - id: DT-PHARM-001
+    when:
+      - field: phenotype
+        op: eq
+        value: HF
+    then:
+      firstLineClasses: ["sglt2i"]
+      secondLineClasses: ["glp1ra", "metformin"]
+      thirdLineClasses: ["dpp4i", "acarbose", "insulin"]
+      avoidClasses: ["sulfonylurea", "glinide"]
+      sidRef: "5.4"
+      outcome: hf_pharmacologic_path
+  - id: DT-PHARM-002
+    when:
+      - field: phenotype
+        op: eq
+        value: CVD_NO_HF
+    then:
+      firstLineClasses: ["metformin", "sglt2i", "glp1ra"]
+      secondLineClasses: ["pioglitazone", "dpp4i", "acarbose", "insulin"]
+      thirdLineClasses: []
+      avoidClasses: ["sulfonylurea", "glinide"]
+      sidRef: "5.3"
+      outcome: cvd_pharmacologic_path
+  - id: DT-PHARM-003
+    when:
+      - field: phenotype
+        op: eq
+        value: CKD_NO_CVD_NO_HF
+    then:
+      firstLineClasses: ["metformin", "sglt2i"]
+      secondLineClasses: ["glp1ra"]
+      thirdLineClasses: ["pioglitazone", "dpp4i", "acarbose", "insulin"]
+      avoidClasses: ["sulfonylurea", "glinide"]
+      sidRef: "5.2"
+      outcome: ckd_pharmacologic_path
+  - id: DT-PHARM-004
+    when:
+      - field: phenotype
+        op: eq
+        value: STANDARD
+    then:
+      firstLineClasses: ["metformin"]
+      secondLineClasses: ["sglt2i", "glp1ra"]
+      thirdLineClasses: ["dpp4i", "acarbose", "pioglitazone", "insulin"]
+      avoidClasses: ["sulfonylurea", "glinide"]
+      sidRef: "5.1"
+      outcome: standard_pharmacologic_path

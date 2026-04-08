@@ -1,0 +1,28 @@
+services:
+  db:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: decision
+      POSTGRES_PASSWORD: decision
+      POSTGRES_DB: decision
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U decision"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DATABASE_URL: postgresql+psycopg2://decision:decision@db:5432/decision
+      DEV_USERNAME: admin
+      DEV_PASSWORD: admin
+      JWT_SECRET: change-me-in-prod
+      JWT_EXPIRE_MINUTES: "120"
+    ports:
+      - "8000:8000"

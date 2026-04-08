@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="https://www.omg.org/spec/DMN/20191111/MODEL/" name="DT-PhenotypeClassification" id="DT-PhenotypeClassification">
+  <decision id="d1" name="PhenotypeClassification">
+    <decisionTable hitPolicy="FIRST">
+      <input id="i1">
+        <inputExpression typeRef="boolean"><text>comorbidities.heartFailure</text></inputExpression>
+      </input>
+      <input id="i2">
+        <inputExpression typeRef="boolean"><text>comorbidities.priorCardiovascularEvent</text></inputExpression>
+      </input>
+      <input id="i3">
+        <inputExpression typeRef="number"><text>labs.eGFRmlMin</text></inputExpression>
+      </input>
+      <output id="o1" name="phenotype" typeRef="string" />
+      <output id="o2" name="sidRef" typeRef="string" />
+
+      <rule id="r1">
+        <inputEntry><text>= true</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>"HF"</text></outputEntry>
+        <outputEntry><text>"5.4"</text></outputEntry>
+      </rule>
+
+      <rule id="r2">
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>= true</text></inputEntry>
+        <inputEntry><text>-</text></inputEntry>
+        <outputEntry><text>"CVD_NO_HF"</text></outputEntry>
+        <outputEntry><text>"5.3"</text></outputEntry>
+      </rule>
+
+      <rule id="r3">
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>&lt; 60</text></inputEntry>
+        <outputEntry><text>"CKD_NO_CVD_NO_HF"</text></outputEntry>
+        <outputEntry><text>"5.2"</text></outputEntry>
+      </rule>
+
+      <rule id="r4">
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>= false</text></inputEntry>
+        <inputEntry><text>&gt;= 60</text></inputEntry>
+        <outputEntry><text>"STANDARD"</text></outputEntry>
+        <outputEntry><text>"5.1"</text></outputEntry>
+      </rule>
+
+    </decisionTable>
+  </decision>
+</definitions>

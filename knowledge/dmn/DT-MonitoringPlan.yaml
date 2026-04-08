@@ -1,0 +1,34 @@
+name: DT-MonitoringPlan
+sidMapping: ["6.1", "6.2"]
+hitPolicy: FIRST
+rules:
+  - id: DT-MON-001
+    when:
+      - field: monitoring.onBasalBolus
+        op: eq
+        value: true
+    then:
+      recommendationText: Mantenere monitoraggio strutturato; nel basal-bolus non c'è preferenza tra CGM e monitoraggio capillare.
+      preferredMonitoringMode: no-preference-between-cgm-and-structured-capillary
+      sidRef: "6.2"
+      outcome: basal_bolus_monitoring
+  - id: DT-MON-002
+    when:
+      - field: monitoring.smbgStructured
+        op: eq
+        value: false
+    then:
+      recommendationText: Avviare monitoraggio capillare strutturato.
+      preferredMonitoringMode: structured-capillary
+      sidRef: "6.1"
+      outcome: start_structured_smbg
+  - id: DT-MON-003
+    when:
+      - field: monitoring.smbgStructured
+        op: eq
+        value: true
+    then:
+      recommendationText: Mantenere monitoraggio capillare strutturato già in corso.
+      preferredMonitoringMode: structured-capillary
+      sidRef: "6.1"
+      outcome: maintain_structured_smbg

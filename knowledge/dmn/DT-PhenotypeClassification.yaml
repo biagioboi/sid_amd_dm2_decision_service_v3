@@ -1,0 +1,55 @@
+name: DT-PhenotypeClassification
+sidMapping: ["5.1", "5.2", "5.3", "5.4"]
+hitPolicy: FIRST
+rules:
+  - id: DT-PHENO-001
+    when:
+      - field: comorbidities.heartFailure
+        op: eq
+        value: true
+    then:
+      phenotype: HF
+      sidRef: "5.4"
+      outcome: heart_failure_path
+  - id: DT-PHENO-002
+    when:
+      - field: comorbidities.priorCardiovascularEvent
+        op: eq
+        value: true
+      - field: comorbidities.heartFailure
+        op: eq
+        value: false
+    then:
+      phenotype: CVD_NO_HF
+      sidRef: "5.3"
+      outcome: cvd_path
+  - id: DT-PHENO-003
+    when:
+      - field: comorbidities.priorCardiovascularEvent
+        op: eq
+        value: false
+      - field: comorbidities.heartFailure
+        op: eq
+        value: false
+      - field: labs.eGFRmlMin
+        op: lt
+        value: 60
+    then:
+      phenotype: CKD_NO_CVD_NO_HF
+      sidRef: "5.2"
+      outcome: ckd_path
+  - id: DT-PHENO-004
+    when:
+      - field: comorbidities.priorCardiovascularEvent
+        op: eq
+        value: false
+      - field: comorbidities.heartFailure
+        op: eq
+        value: false
+      - field: labs.eGFRmlMin
+        op: gte
+        value: 60
+    then:
+      phenotype: STANDARD
+      sidRef: "5.1"
+      outcome: standard_path

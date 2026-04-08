@@ -1,0 +1,34 @@
+name: DT-DataCompleteness
+sidMapping: []
+hitPolicy: COLLECT
+rules:
+  - id: DT-DATA-001
+    when:
+      - field: hbA1cPresent
+        op: eq
+        value: false
+    then:
+      field: facts.labs.hbA1cPercent
+      reason: HbA1c assente
+      blocking: true
+      outcome: missing_hba1c
+  - id: DT-DATA-002
+    when:
+      - field: eGFRPresent
+        op: eq
+        value: false
+    then:
+      field: facts.labs.eGFRmlMin
+      reason: eGFR assente
+      blocking: true
+      outcome: missing_egfr
+  - id: DT-DATA-003
+    when:
+      - field: comorbidityAssessmentPresent
+        op: eq
+        value: false
+    then:
+      field: facts.comorbidities
+      reason: Valutazione comorbidità incompleta
+      blocking: true
+      outcome: missing_comorbidities
