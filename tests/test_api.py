@@ -1,6 +1,11 @@
 import importlib
+from pathlib import Path
 
+import pytest
 from fastapi.testclient import TestClient
+
+
+DATASET_AVAILABLE = Path("dataset/Shanghai_T2DM").exists() and Path("dataset/Shanghai_T2DM_Summary.xlsx").exists()
 
 
 def _client() -> TestClient:
@@ -249,3 +254,40 @@ def test_digital_twin_simulate_advanced_scenario_endpoint():
     assert body["status"] in ("pass", "warn", "fail")
     assert body["metrics"]["horizonMinutes"] == 12 * 60
     assert len(body["trajectory"]) > 10
+
+
+@pytest.mark.skipif(not DATASET_AVAILABLE, reason="Shanghai dataset not available in repo")
+def test_digital_twin_calibrate_from_dataset_endpoint():
+    client = _client()
+    tok = _token(client)
+    headers = {"Authorization": f"Bearer {tok}"}
+
+    out = client.post(
+        "/v1/digital-twin/calibrate-from-dataset",
+        json={"recordId": "2014_1_20210317"},
+        headers=headers,
+    )
+    assert out.status_code == 200
+    body = out.json()
+    assert body["recordId"] == "2014_1_20210317"
+    assert body["dataset"]["datasetId"] == "Shanghai_T2DM"
+    assert body["calibration"]["observationCount"] > 10
+    assert body["profile"]["parameterModifiers"]["carbSensitivityMultiplier"] > 0
+
+
+@pytest.mark.skipif(not DATASET_AVAILABLE, reason="Shanghai dataset not available in repo")
+def test_digital_twin_simulate_from_dataset_endpoint():
+    client = _client()
+    tok = _token(client)
+    headers = {"Authorization": f"Bearer {tok}"}
+
+    out = client.post(
+        "/v1/digital-twin/simulate-from-dataset",
+        json={"recordId": "2014_1_20210317", "calibrateProfile": True},
+        headers=headers,
+    )
+    assert out.status_code == 200
+    body = out.json()
+    assert body["recordId"] == "2014_1_20210317"
+    assert body["simulation"]["status"] in ("pass", "warn", "fail")
+    assert len(body["simulation"]["trajectory"]) > 10

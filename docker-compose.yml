@@ -26,3 +26,5 @@ services:
       JWT_EXPIRE_MINUTES: "120"
     ports:
       - "9001:9001"
+    volumes:
+      - ./dataset:/app/dataset:ro

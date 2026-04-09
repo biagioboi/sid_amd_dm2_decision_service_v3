@@ -13,10 +13,15 @@ from .models import (
     DigitalTwinMetrics,
     DigitalTwinSimulateRequest,
     DigitalTwinSimulateResponse,
+    TwinDatasetCalibrationRequest,
+    TwinDatasetCalibrationResponse,
+    TwinDatasetSimulationRequest,
+    TwinDatasetSimulationResponse,
     TwinScenarioSimulationRequest,
 )
 from .persistence import get_evaluation, init_db, list_audit_events, save_evaluation
-from .twin import simulate_scenario
+from .shanghai_dataset import load_shanghai_record
+from .twin import calibrate_profile_to_history, simulate_scenario
 
 app = FastAPI(
     title="SID/AMD DM2 Decision Service",
@@ -121,4 +126,80 @@ def digital_twin_simulate(body: DigitalTwinSimulateRequest) -> dict:
 @app.post("/v1/digital-twin/simulate-advanced", dependencies=[Depends(require_role("clinician"))])
 def digital_twin_simulate_advanced(body: TwinScenarioSimulationRequest) -> dict:
     resp = simulate_scenario(body)
+    return resp.model_dump(mode="json") if hasattr(resp, "model_dump") else resp.dict()
+
+
+@app.post("/v1/digital-twin/calibrate-from-dataset", dependencies=[Depends(require_role("clinician"))])
+def digital_twin_calibrate_from_dataset(body: TwinDatasetCalibrationRequest) -> dict:
+    try:
+        dataset, profile, scenario, historical, source_file, assumptions = load_shanghai_record(
+            record_id=body.recordId,
+            dataset_root=body.datasetRoot,
+            summary_path=body.summaryPath,
+            dt_minutes=int(body.dtMinutes),
+        )
+        calibrated_profile, calibration, calibration_assumptions = calibrate_profile_to_history(
+            profile,
+            scenario,
+            historical,
+            None,
+        )
+    except (FileNotFoundError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    resp = TwinDatasetCalibrationResponse(
+        recordId=body.recordId,
+        sourceFile=source_file,
+        dataset=dataset,
+        profile=calibrated_profile,
+        scenario=scenario,
+        historicalGlucose=historical,
+        calibration=calibration,
+        assumptions=assumptions + calibration_assumptions,
+    )
+    return resp.model_dump(mode="json") if hasattr(resp, "model_dump") else resp.dict()
+
+
+@app.post("/v1/digital-twin/simulate-from-dataset", dependencies=[Depends(require_role("clinician"))])
+def digital_twin_simulate_from_dataset(body: TwinDatasetSimulationRequest) -> dict:
+    try:
+        dataset, profile, scenario, historical, source_file, assumptions = load_shanghai_record(
+            record_id=body.recordId,
+            dataset_root=body.datasetRoot,
+            summary_path=body.summaryPath,
+            dt_minutes=int(body.dtMinutes),
+        )
+        calibration = None
+        profile_to_use = profile
+        extra_assumptions = list(assumptions)
+        if body.calibrateProfile:
+            profile_to_use, calibration, calibration_assumptions = calibrate_profile_to_history(
+                profile,
+                scenario,
+                historical,
+                None,
+            )
+            extra_assumptions.extend(calibration_assumptions)
+        simulation = simulate_scenario(
+            TwinScenarioSimulationRequest(
+                dataset=dataset,
+                profile=profile_to_use,
+                scenario=scenario,
+                historicalGlucose=historical,
+            )
+        )
+        simulation.assumptions = extra_assumptions + list(simulation.assumptions)
+    except (FileNotFoundError, ValueError, RuntimeError) as exc:
+        raise HTTPException(status_code=422, detail=str(exc))
+
+    resp = TwinDatasetSimulationResponse(
+        recordId=body.recordId,
+        sourceFile=source_file,
+        dataset=dataset,
+        profile=profile_to_use,
+        scenario=scenario,
+        historicalGlucose=historical,
+        calibration=calibration,
+        simulation=simulation,
+    )
     return resp.model_dump(mode="json") if hasattr(resp, "model_dump") else resp.dict()

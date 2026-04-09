@@ -31,6 +31,8 @@ uvicorn app.main:app --reload
 docker compose up --build
 ```
 
+Il `docker-compose.yml` monta automaticamente `./dataset` in `/app/dataset` per abilitare gli endpoint dataset-driven del digital twin.
+
 ## Endpoint principali
 
 - `GET /health`
@@ -39,6 +41,8 @@ docker compose up --build
 - `GET /v1/decision-evaluations/{evaluationId}/audit`
 - `POST /v1/digital-twin/simulate`
 - `POST /v1/digital-twin/simulate-advanced`
+- `POST /v1/digital-twin/calibrate-from-dataset`
+- `POST /v1/digital-twin/simulate-from-dataset`
 - `GET /fhir/PlanDefinition/sid-amd-dm2-2022`
 - `GET /fhir/Library/sid-amd-dm2-logic`
 - `POST /fhir/PlanDefinition/sid-amd-dm2-2022/$apply`
@@ -89,6 +93,29 @@ curl -X POST http://127.0.0.1:9001/v1/digital-twin/simulate-advanced \
   }'
 ```
 
+4) Calibra il twin su una sessione reale del dataset Shanghai T2DM:
+
+```bash
+curl -X POST http://127.0.0.1:9001/v1/digital-twin/calibrate-from-dataset \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "recordId": "2014_1_20210317"
+  }'
+```
+
+5) Esegui replay e simulazione di una sessione del dataset:
+
+```bash
+curl -X POST http://127.0.0.1:9001/v1/digital-twin/simulate-from-dataset \
+  -H 'Content-Type: application/json' \
+  -H "Authorization: Bearer $TOKEN" \
+  -d '{
+    "recordId": "2014_1_20210317",
+    "calibrateProfile": true
+  }'
+```
+
 ## Test
 
 ```bash
@@ -100,3 +127,5 @@ pytest -q
 - I cambi terapia sono sempre restituiti come **raccomandazioni draft** e richiedono validazione clinica.
 - Il database SQLite viene creato in `data/decision_service.db`.
 - Il nuovo endpoint avanzato del twin usa come default il contesto del dataset Shanghai T2DM: 100 pazienti T2DM, CGM ogni 15 minuti, registrazioni di 3-14 giorni, come descritto nell'articolo "Chinese diabetes datasets for data-driven machine learning" (Scientific Data, 2023) e nella repo dataset indicata dall'utente.
+- Gli endpoint dataset-driven richiedono l'accesso ai file Excel nel path `dataset` e un binario `soffice` disponibile nel runtime per convertire `.xls/.xlsx` in CSV temporanei.
+- Nell'immagine Docker il supporto a `soffice` viene installato dal `Dockerfile`; con Docker Compose il dataset viene montato read-only da `./dataset`.
